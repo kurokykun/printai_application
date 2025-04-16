@@ -11,31 +11,31 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class BookQuery(BaseModel):
-    title: Optional[str] = Field(None, max_length=100, description="Título del libro a buscar")
-    category: Optional[str] = Field(None, max_length=50, description="Categoría del libro a buscar")
+    title: Optional[str] = Field(None, max_length=100, description="Title of the book to search for")
+    category: Optional[str] = Field(None, max_length=50, description="Category of the book to search for")
 
 class InitResponse(BaseModel):
-    message: str = Field(..., description="Mensaje indicando el estado del scraping de libros.")
+    message: str = Field(..., description="Message indicating the status of the book scraping.")
 
 app = FastAPI()
 
 redis_client = redis.StrictRedis(host='localhost', port=6379, decode_responses=True)
 
-@app.post("/init", response_model=InitResponse, summary="Inicia el scraping de libros", description="Este endpoint inicia el proceso de scraping de libros desde Books to Scrape y almacena los datos en Redis.")
+@app.post("/init", response_model=InitResponse, summary="Starts book scraping", description="This endpoint starts the book scraping process from Books to Scrape and stores the data in Redis.")
 def init_scraping() -> InitResponse:
     try:
-        logger.info("Iniciando el scraping de libros.")
+        logger.info("Starting book scraping.")
         scrape_books()
-        logger.info("Scraping de libros completado.")
-        return {"message": "Scraping de libros completado."}
+        logger.info("Book scraping completed.")
+        return {"message": "Book scraping completed."}
     except Exception as e:
-        logger.error(f"Error en el endpoint /init: {e}")
+        logger.error(f"Error in the /init endpoint: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/books/search", response_model=List[Dict[str, Any]], summary="Busca libros por título o categoría", description="Este endpoint permite buscar libros almacenados en Redis filtrando por título o categoría.")
+@app.post("/books/search", response_model=List[Dict[str, Any]], summary="Search books by title or category", description="This endpoint allows searching for books stored in Redis by filtering by title or category.")
 def search_books(query: BookQuery) -> List[Dict[str, Any]]:
     try:
-        logger.info(f"Buscando libros con los parámetros: {query.dict()}.")
+        logger.info(f"Searching for books with parameters: {query.dict()}.")
         keys = redis_client.keys("book:*")
         books = [json.loads(redis_client.get(key)) for key in keys]
         print(books)
@@ -45,19 +45,35 @@ def search_books(query: BookQuery) -> List[Dict[str, Any]]:
         if query.category:
             books = [book for book in books if query.category.lower() in book["category"].lower()]
 
-        logger.info(f"Se encontraron {len(books)} libros que coinciden con los parámetros.")
+        logger.info(f"Found {len(books)} books matching the parameters.")
         return books
     except Exception as e:
-        logger.error(f"Error en el endpoint /books/search: {e}")
+        logger.error(f"Error in the /books/search endpoint: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/headlines", response_model=List[Dict[str, Any]], summary="Obtiene titulares de Hacker News", description="Este endpoint obtiene titulares de Hacker News en tiempo real, incluyendo título, URL y puntuación.")
+@app.get("/books", response_model=List[Dict[str, Any]], summary="Retrieve books", description="This endpoint retrieves books from Redis, optionally filtering by category.")
+def get_books(category: Optional[str] = None) -> List[Dict[str, Any]]:
+    try:
+        logger.info(f"Retrieving books with category filter: {category}.")
+        keys = redis_client.keys("book:*")
+        books = [json.loads(redis_client.get(key)) for key in keys]
+
+        if category:
+            books = [book for book in books if category.lower() in book["category"].lower()]
+
+        logger.info(f"Retrieved {len(books)} books.")
+        return books
+    except Exception as e:
+        logger.error(f"Error in the /books endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/headlines", response_model=List[Dict[str, Any]], summary="Fetch Hacker News headlines", description="This endpoint fetches real-time Hacker News headlines, including title, URL, and score.")
 def get_headlines() -> List[Dict[str, Any]]:
     try:
-        logger.info("Iniciando la obtención de titulares de Hacker News.")
+        logger.info("Starting to fetch Hacker News headlines.")
         headlines = scrape_hn()
-        logger.info(f"Se obtuvieron {len(headlines)} titulares de Hacker News.")
+        logger.info(f"Fetched {len(headlines)} Hacker News headlines.")
         return headlines
     except Exception as e:
-        logger.error(f"Error en el endpoint /headlines: {e}")
+        logger.error(f"Error in the /headlines endpoint: {e}")
         raise HTTPException(status_code=500, detail=str(e))
