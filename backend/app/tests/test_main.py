@@ -12,7 +12,7 @@ def test_init_scraping():
 
 # Prueba para el endpoint /books/search
 def test_search_books():
-    response = client.get("/books/search", params={"title": "test"})
+    response = client.post("/books/search", json={"title": "ni"})
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 

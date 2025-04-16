@@ -32,7 +32,7 @@ def init_scraping() -> InitResponse:
         logger.error(f"Error en el endpoint /init: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/books/search", response_model=List[Dict[str, Any]], summary="Busca libros por título o categoría", description="Este endpoint permite buscar libros almacenados en Redis filtrando por título o categoría.")
+@app.post("/books/search", response_model=List[Dict[str, Any]], summary="Busca libros por título o categoría", description="Este endpoint permite buscar libros almacenados en Redis filtrando por título o categoría.")
 def search_books(query: BookQuery) -> List[Dict[str, Any]]:
     try:
         logger.info(f"Buscando libros con los parámetros: {query.dict()}.")
