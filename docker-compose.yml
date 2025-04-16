@@ -46,10 +46,10 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend:/app
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
     depends_on:
       - n8n
-
   n8n:
     image: n8nio/n8n
     container_name: recruiter-dev-n8n
