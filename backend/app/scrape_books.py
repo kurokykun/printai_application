@@ -16,71 +16,94 @@ redis_client = redis.StrictRedis(
     host='localhost', port=6379, decode_responses=True
 )
 
-BASE_URL = "https://books.toscrape.com/catalogue/"
+BASE_URL = "https://books.toscrape.com/"
 
 
 def scrape_books() -> None:
-    page = 1
     max_retries = 3
 
-    while True:
-        url = f"{BASE_URL}page-{page}.html"
-        retries = 0
+    try:
+        response = requests.get(BASE_URL)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        cat_links = soup.select('.side_categories ul.nav-list ul li a')
+        categories = [
+            (cat.text.strip(), BASE_URL + cat['href']) for cat in cat_links
+        ]
+    except RequestException as e:
+        logger.error(f"Error obtaining categories: {e}")
+        return
 
-        while retries < max_retries:
-            try:
-                response = requests.get(url)
-                if response.status_code != 200:
-                    logger.warning(
-                        f"Pagination ended at page {page}."
-                    )
-                    return
+    for cat_name, category_url in categories:
+        logger.info(f"Processing category: {cat_name}")
+        page = 1
 
-                soup = BeautifulSoup(response.text, 'html.parser')
-                books = soup.find_all('article', class_='product_pod')
+        while True:
+            print(f"Scraping {category_url}...")
+            retry = 0
+            exito = False
 
-                for book in books:
-                    title = book.h3.a['title']
-                    price = float(book.find(
-                        'p', class_='price_color').text[2:])
-                    category = book.find(
-                        'p', class_='instock availability'
-                    ).text.strip()
-                    image_url = BASE_URL + book.img['src']
+            while retry < max_retries and not exito:
+                try:
+                    response = requests.get(category_url)
+                    if response.status_code != 200:
+                        logger.warning(
+                            f"No more pages in category {cat_name}.")
+                        exito = False
+                        break
 
-                    if price < 20:
-                        book_id = hash(title)
-                        book_data = {
-                            "title": title,
-                            "price": price,
-                            "category": category,
-                            "image_url": image_url,
-                        }
-                        redis_client.set(
-                            f"book:{book_id}", json.dumps(book_data)
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    books = soup.find_all('article', class_='product_pod')
+
+                    for book in books:
+                        title = book.h3.a['title']
+                        price = float(
+                            book.find('p', class_='price_color').text[2:]
                         )
-                        logger.info(f"Book stored: {title} ({price}£)")
+                        image_url = BASE_URL + book.img['src']
 
-                next_page = soup.find('li', class_='next')
-                if not next_page:
-                    logger.info("No more pages to process.")
-                    return
+                        if price < 20:
+                            book_id = hash(title)
+                            book_data = {
+                                "title": title,
+                                "price": price,
+                                "category": cat_name,
+                                "image_url": image_url,
+                            }
+                            redis_client.set(
+                                f"book:{book_id}", json.dumps(book_data)
+                            )
+                            logger.info(
+                                f"Book stored: {title} ({price}£)"
+                            )
 
-                page += 1
-                break
-            except RequestException as e:
-                retries += 1
-                logger.warning(
-                    f"""Error processing page {page},
-                    attempt {retries}/{max_retries}: {e}"""
+                    next_page = soup.find('li', class_='next')
+                    exito = True
+                    break
+
+                except RequestException as e:
+                    retry += 1
+                    logger.warning(
+                        f"Error processing page {page}"
+                        f" of category {cat_name}, "
+                        f"attempt {retry}/{max_retries}: {e}"
+                    )
+                    time.sleep(2)
+
+            if not exito or retry == max_retries:
+                logger.error(
+                    f"Failed to process page {page} of category {cat_name} "
+                    f"after {max_retries} attempts, or no more pages."
                 )
-                time.sleep(2)
+                break
 
-        if retries == max_retries:
-            logger.error(
-                f"Failed to process page {page} after {max_retries} attempts."
-            )
-            return
+            if not next_page:
+                logger.info(f"No more pages for category {cat_name}.")
+                break
+
+            next_page_url = next_page.a['href']
+            category_url = requests.compat.urljoin(category_url, next_page_url)
+            page += 1
 
 
 if __name__ == "__main__":
