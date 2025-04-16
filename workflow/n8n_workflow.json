@@ -1,0 +1,61 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "path": "ask",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:7013/books/search",
+        "method": "GET",
+        "responseFormat": "json",
+        "queryParameters": [
+          {
+            "name": "title",
+            "value": "={{$json[\"query\"]}}"
+          }
+        ]
+      },
+      "name": "Get Books",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [450, 200]
+    },
+    {
+      "parameters": {
+        "url": "http://backend:7013/headlines",
+        "method": "GET",
+        "responseFormat": "json"
+      },
+      "name": "Get Headlines",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [450, 400]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Books",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Headlines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

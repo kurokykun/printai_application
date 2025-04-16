@@ -22,7 +22,8 @@ options.add_argument('--disable-gpu')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 
-service = Service('C:\\Users\\Kuroky\\Documents\\chromedriver.exe')
+#Modificar esto en prod
+service = Service('/usr/local/bin/chromedriver')
 driver = webdriver.Chrome(service=service, options=options)
 
 BASE_URL = "https://news.ycombinator.com/"
