@@ -42,14 +42,12 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
     container_name: recruiter-dev-frontend
-    command: npm run serve -- --host 0.0.0.0
     ports:
       - "8080:8080"
     volumes:
       - ./frontend:/app
-      - /app/node_modules
+      - node_modules_frontend:/app/node_modules
     depends_on:
       - backend
       - n8n
@@ -79,3 +77,4 @@ services:
 volumes:
   redis_data:
   n8n_data:
+  node_modules_frontend:
