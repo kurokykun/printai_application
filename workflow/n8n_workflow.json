@@ -1,61 +1,174 @@
 {
+  "name": "My workflow",
   "nodes": [
     {
       "parameters": {
-        "path": "ask",
-        "responseMode": "lastNode",
+        "public": true,
         "options": {}
       },
-      "name": "Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [250, 300]
+      "id": "5dff835a-bd8b-4117-8a08-96f5af252bd6",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "53c136fe-3e77-4709-a143-fe82746dd8b6",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {},
+      "id": "12bf837a-a0c6-4d04-97ee-be4806ffe722",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [
+        360,
+        240
+      ],
+      "typeVersion": 1.3
     },
     {
       "parameters": {
-        "url": "http://localhost:7013/books/search",
-        "method": "GET",
-        "responseFormat": "json",
-        "queryParameters": [
-          {
-            "name": "title",
-            "value": "={{$json[\"query\"]}}"
-          }
-        ]
+        "options": {}
       },
-      "name": "Get Books",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 1,
-      "position": [450, 200]
+      "id": "dca73224-c781-4751-9a76-69b7ee31f971",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        240,
+        0
+      ],
+      "typeVersion": 1.8
     },
     {
       "parameters": {
-        "url": "http://backend:7013/headlines",
-        "method": "GET",
-        "responseFormat": "json"
+        "modelName": "models/gemini-1.5-flash",
+        "options": {}
       },
-      "name": "Get Headlines",
-      "type": "n8n-nodes-base.httpRequest",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
-      "position": [450, 400]
+      "position": [
+        220,
+        240
+      ],
+      "id": "c8a7007e-467d-461a-9a37-aae87b2be8ad",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "AJewMrbN8ao4IMLs",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Api book list,you can search books by title,price or category,if not provided category or title fill with an empty string",
+        "method": "POST",
+        "url": "http://recruiter-dev-backend:7013/books/search",
+        "sendBody": true,
+        "parametersBody": {
+          "values": [
+            {
+              "name": "title",
+              "valueProvider": "modelOptional"
+            },
+            {
+              "name": "category",
+              "valueProvider": "modelOptional"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        240
+      ],
+      "id": "ed4f0617-4559-4f11-b575-78b9b7a68d11",
+      "name": "Book Search Api"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Get the current news",
+        "url": "http://recruiter-dev-backend:7013/headlines"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        500,
+        240
+      ],
+      "id": "1e0355ef-a0ea-4dde-9a99-3a00ba674a17",
+      "name": "News Search Api"
     }
   ],
+  "pinData": {},
   "connections": {
-    "Webhook": {
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
       "main": [
         [
           {
-            "node": "Get Books",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Get Headlines",
+            "node": "AI Agent",
             "type": "main",
             "index": 0
           }
         ]
       ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Book Search Api": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "News Search Api": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
     }
-  }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "307065a3-19ea-4c53-b2ee-062c957a1009",
+  "meta": {
+    "instanceId": "be98ff9ffa124adb30b951b3e7be867a40bd5c5fa86d260fc2cac6354def0c24"
+  },
+  "id": "JUYoBqm93ixb8Mzp",
+  "tags": []
 }

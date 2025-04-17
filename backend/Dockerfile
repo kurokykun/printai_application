@@ -14,11 +14,9 @@ RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add
     apt-get update && apt-get install -y google-chrome-stable && \
     rm -rf /var/lib/apt/lists/*
 
-# Descargar ChromeDriver desde una fuente confiable
 RUN apt-get update && apt-get install -y chromium-driver && \
     ln -s /usr/bin/chromedriver /usr/local/bin/chromedriver
 
-# Verificar la instalación de ChromeDriver
 RUN ls -l /usr/local/bin/chromedriver && /usr/local/bin/chromedriver --version
 
 COPY requirements.txt ./
@@ -31,4 +29,8 @@ COPY . .
 
 EXPOSE 7013
 
-CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7013"]
+COPY entrypoint.sh /app/entrypoint.sh
+
+RUN chmod +x /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]

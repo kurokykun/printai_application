@@ -19,7 +19,7 @@ class InitResponse(BaseModel):
 
 app = FastAPI()
 
-redis_client = redis.StrictRedis(host='localhost', port=6379, decode_responses=True)
+redis_client = redis.StrictRedis(host='recruiter-dev-redis', port=6379, decode_responses=True)
 
 @app.post("/init", response_model=InitResponse, summary="Starts book scraping", description="This endpoint starts the book scraping process from Books to Scrape and stores the data in Redis.")
 def init_scraping() -> InitResponse:
@@ -77,3 +77,7 @@ def get_headlines() -> List[Dict[str, Any]]:
     except Exception as e:
         logger.error(f"Error in the /headlines endpoint: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/health", summary="Health check endpoint", description="Returns the health status of the server.")
+def health_check():
+    return {"status": "ok"}

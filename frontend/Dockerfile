@@ -1,20 +1,18 @@
-# Dockerfile para el frontend
-FROM node:18
+# Dockerfile for Vue frontend
+FROM node:16-alpine
 
-# Establecer el directorio de trabajo
+# set working directory
 WORKDIR /app
 
-# Copiar los archivos necesarios
+# copy package files and install dependencies
 COPY package*.json ./
-
-# Instalar las dependencias
 RUN npm install
 
-# Copiar el código fuente
+# copy source code
 COPY . .
 
-# Exponer el puerto de la aplicación
+# expose dev server port
 EXPOSE 3000
 
-# Comando para ejecutar la aplicación
-CMD ["npm", "start"]
+# start the app
+CMD ["npm", "run", "serve"]

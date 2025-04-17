@@ -42,16 +42,20 @@ services:
   frontend:
     build:
       context: ./frontend
+      dockerfile: Dockerfile
     container_name: recruiter-dev-frontend
+    command: npm run serve -- --host 0.0.0.0
     ports:
-      - "3000:3000"
+      - "8080:8080"
     volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
+      - backend
       - n8n
   n8n:
-    image: n8nio/n8n
+    build:
+      context: ./workflow
     container_name: recruiter-dev-n8n
     ports:
       - "5678:5678"
@@ -66,6 +70,9 @@ services:
       - N8N_SECURE_COOKIE=false
     volumes:
       - n8n_data:/home/node/.n8n
+      - ./workflow/n8n_workflow.json:/home/node/.n8n/workflows.json
+    
+
     depends_on:
       - redis
 

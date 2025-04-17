@@ -13,11 +13,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 redis_client = redis.StrictRedis(
-    host='localhost', port=6379, decode_responses=True
+    host='recruiter-dev-redis', port=6379, decode_responses=True
 )
 
 BASE_URL = "https://books.toscrape.com/"
-
 
 def scrape_books() -> None:
     max_retries = 3
