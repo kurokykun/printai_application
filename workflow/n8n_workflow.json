@@ -4,13 +4,14 @@
     {
       "parameters": {
         "public": true,
+        "mode": "webhook",
         "options": {}
       },
       "id": "5dff835a-bd8b-4117-8a08-96f5af252bd6",
       "name": "When chat message received",
       "type": "@n8n/n8n-nodes-langchain.chatTrigger",
       "position": [
-        0,
+        20,
         0
       ],
       "webhookId": "53c136fe-3e77-4709-a143-fe82746dd8b6",
@@ -49,7 +50,7 @@
       "typeVersion": 1,
       "position": [
         220,
-        240
+        220
       ],
       "id": "c8a7007e-467d-461a-9a37-aae87b2be8ad",
       "name": "Google Gemini Chat Model",
