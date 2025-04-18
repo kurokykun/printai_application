@@ -77,4 +77,4 @@ services:
 volumes:
   redis_data:
   n8n_data:
-  node_modules_frontend:
+  node_modules_frontend:  
