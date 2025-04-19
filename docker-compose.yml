@@ -38,19 +38,6 @@ services:
       - REMOTE_DRIVER_URL=recruiter-dev-selenium
     dns:
       - 8.8.8.8
-
-  frontend:
-    build:
-      context: ./frontend
-    container_name: recruiter-dev-frontend
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./frontend:/app
-      - node_modules_frontend:/app/node_modules
-    depends_on:
-      - backend
-      - n8n
   n8n:
     build:
       context: ./workflow
