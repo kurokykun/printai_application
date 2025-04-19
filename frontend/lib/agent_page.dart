@@ -15,10 +15,11 @@ class AgentPage extends StatefulWidget {
 class _AgentPageState extends State<AgentPage> {
   final List<Map<String, String>> _messages = [];
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   late stt.SpeechToText _speech;
   bool _isListening = false;
   String _voiceInput = '';
-  late final String _sessionId;
+  String _sessionId = '';
 
   @override
   void initState() {
@@ -44,13 +45,17 @@ class _AgentPageState extends State<AgentPage> {
       _voiceInput = '';
       _messages.add({'role': 'agent', 'text': '...'});
     });
+    _scrollToBottom();
 
     try {
       final response = await _sendToAgent(text);
       setState(() {
         _messages.removeLast();
         _messages.add({'role': 'agent', 'text': response});
+        _controller.clear();
+        _voiceInput = '';
       });
+      _scrollToBottom();
     } catch (e) {
       setState(() {
         _messages.removeLast();
@@ -58,7 +63,10 @@ class _AgentPageState extends State<AgentPage> {
           'role': 'agent',
           'text': 'Error al conectar con el agente.',
         });
+        _controller.clear();
+        _voiceInput = '';
       });
+      _scrollToBottom();
     }
   }
 
@@ -79,7 +87,6 @@ class _AgentPageState extends State<AgentPage> {
       );
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        // Si la respuesta es un objeto con la clave 'outpout', devolver su valor
         if (decoded is Map && decoded.containsKey('output')) {
           return decoded['output'].toString();
         } else {
@@ -93,7 +100,7 @@ class _AgentPageState extends State<AgentPage> {
     }
   }
 
-  void _listen() async {
+  void _startListening() async {
     if (!_isListening) {
       bool available = await _speech.initialize();
       if (available) {
@@ -107,20 +114,56 @@ class _AgentPageState extends State<AgentPage> {
           },
         );
       }
-    } else {
+    }
+  }
+
+  void _stopListening() {
+    if (_isListening) {
       setState(() => _isListening = false);
       _speech.stop();
     }
   }
 
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _clearChat() {
+    setState(() {
+      _messages.clear();
+      _sessionId = _generateSessionId();
+      _controller.clear();
+      _voiceInput = '';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Agente Conversacional')),
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Limpiar chat',
+            onPressed: () {
+              _clearChat();
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
+              controller: _scrollController,
               padding: const EdgeInsets.all(16),
               itemCount: _messages.length,
               itemBuilder: (context, index) {
@@ -173,7 +216,23 @@ class _AgentPageState extends State<AgentPage> {
                 IconButton(
                   icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
                   color: _isListening ? Colors.red : Colors.blue,
-                  onPressed: _listen,
+                  onPressed: null,
+                ),
+                GestureDetector(
+                  onLongPressStart: (_) => _startListening(),
+                  onLongPressEnd: (_) => _stopListening(),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 100),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _isListening ? Colors.red : Colors.blue,
+                    ),
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      _isListening ? Icons.mic : Icons.mic_none,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.send),

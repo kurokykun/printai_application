@@ -56,12 +56,24 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
       - ./workflow/n8n_workflow.json:/home/node/.n8n/workflows.json
+      - ./workflow/credentials.json:/home/node/.n8n/credentials.json
     
 
     depends_on:
       - redis
 
+  frontend:
+    build:
+      context: ./frontend
+    container_name: recruiter-dev-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - default
+
 volumes:
   redis_data:
   n8n_data:
-  node_modules_frontend:  
+  node_modules_frontend:

@@ -10,3 +10,4 @@ echo "Activando workflows importados..."
 n8n update:workflow --all --active=true || true
 
 exec n8n
+

@@ -10,7 +10,7 @@ while ! curl -s http://backend:7013/health > /dev/null; do
 done
 
 
-echo "callling the endpoint /init..."
-curl -X POST http://localhost:7013/init
+#echo "callling the endpoint /init..."
+#curl -X POST http://localhost:7013/init
 
 wait
